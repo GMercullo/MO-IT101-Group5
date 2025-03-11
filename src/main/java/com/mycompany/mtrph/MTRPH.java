@@ -405,7 +405,7 @@ public class MTRPH {
      * Compute employee weekly salary
      */
     private static void computeWeeklySalary(Row row, Scanner scanner) {
-    System.out.print("Enter Week Number (1-30): ");
+    System.out.print("Enter Week Number (1-31): ");
     int weekNumber = scanner.nextInt();
     scanner.nextLine();
 
