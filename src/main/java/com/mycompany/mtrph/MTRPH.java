@@ -66,9 +66,10 @@ public class MTRPH {
             System.out.println("(0) Log Out");
             System.out.println("(1) Search Employee");
             System.out.println("(2) Display All Employees");
-            System.out.println("(3) Add Employee");
-            System.out.println("(4) Edit Employee Details");
-            System.out.println("(5) Delete Employee");
+            System.out.println("(3) Display All Employees With Weekly Salary");
+            System.out.println("(4) Add Employee");
+            System.out.println("(5) Edit Employee Details");
+            System.out.println("(6) Delete Employee");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
@@ -84,16 +85,19 @@ public class MTRPH {
                     displayAllEmployees();
                     break;
                 case 3:
-                    addEmployee(scanner);
+                    displayAllEmployeesWithWeeklySalary(scanner); 
                     break;
                 case 4:
-                    editEmployeeDetails(scanner);
+                    addEmployee(scanner);
                     break;
                 case 5:
+                    editEmployeeDetails(scanner);
+                    break;
+                case 6:
                     deleteEmployee(scanner);
                     break;
                 default:
-                    System.out.println("Invalid choice. Please try again.");
+                    System.out.println("❌ Invalid choice. Please try again.");
             }
         }
     }
@@ -589,6 +593,139 @@ public class MTRPH {
         System.out.println("❌ Invalid choice. Please try again.");
     }
   }  
+
+    private static void displayAllEmployeesWithWeeklySalary(Scanner scanner) {
+    System.out.print("Enter Week Number (1-31): ");
+    int weekNumber = scanner.nextInt();
+    scanner.nextLine();
+
+    LocalDate weekStartDate = LocalDate.of(2024, 6, 3).plusWeeks(weekNumber - 1);
+    LocalDate weekEndDate = weekStartDate.plusDays(4);
+
+    if (weekEndDate.getMonthValue() != weekStartDate.getMonthValue()) {
+        weekEndDate = weekStartDate.withDayOfMonth(weekStartDate.lengthOfMonth());
+    }
+
+    try (FileInputStream fis = new FileInputStream(EMPLOYEE_DATA_FILE);
+         Workbook workbook = new XSSFWorkbook(fis)) {
+
+        Sheet employeeSheet = workbook.getSheet(EMPLOYEE_SHEET_NAME);
+        if (employeeSheet == null) {
+            System.out.println("❌ Employee data sheet not found!");
+            return;
+        }
+
+        System.out.println("\nMotorPH Payroll Management System");
+        System.out.println("==============================================");
+
+        DateTimeFormatter birthdayFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
+        for (Row row : employeeSheet) {
+            if (row.getRowNum() == 0) continue; // Skip header row
+
+            if (getCellValue(row.getCell(0)).isEmpty() && getCellValue(row.getCell(2)).isEmpty()) {
+                continue;
+            }
+
+            // === Basic Salary and Hourly Rate Calculation ===
+            double basicSalary = Double.parseDouble(getCellValue(row.getCell(13)).replaceAll("[^0-9.]", ""));
+            double hourlyRate = (basicSalary / 21) / 8;
+
+            double totalRegularHours = 0;
+            double totalOvertimeHours = 0;
+            double overtimeRatePercentage = 1.25;
+
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            LocalTime otStart = LocalTime.of(8, 0);
+            LocalTime otEnd = LocalTime.of(8, 10);
+
+            // === Attendance Data Processing ===
+            try (FileInputStream attendanceFis = new FileInputStream(EMPLOYEE_DATA_FILE);
+                 Workbook attendanceWorkbook = new XSSFWorkbook(attendanceFis)) {
+
+                Sheet attendanceSheet = attendanceWorkbook.getSheet(ATTENDANCE_SHEET_NAME);
+                if (attendanceSheet == null) {
+                    System.out.println("❌ Sheet '" + ATTENDANCE_SHEET_NAME + "' not found!");
+                    return;
+                }
+
+                for (Row attendanceRow : attendanceSheet) {
+                    if (attendanceRow.getRowNum() == 0) continue;
+
+                    String fullName = getCellValue(attendanceRow.getCell(2)) + " " + getCellValue(attendanceRow.getCell(1));
+                    if (fullName.equalsIgnoreCase(getCellValue(row.getCell(2)) + " " + getCellValue(row.getCell(1)))) {
+                        LocalDate date = parseDateFromCell(attendanceRow.getCell(3));
+                        if (date.isBefore(weekStartDate) || date.isAfter(weekEndDate)) continue;
+
+                        LocalTime logIn = readTimeCell(attendanceRow.getCell(4), timeFormatter);
+                        LocalTime logOut = readTimeCell(attendanceRow.getCell(5), timeFormatter);
+
+                        double dailyHours = ChronoUnit.MINUTES.between(logIn, logOut) / 60.0;
+                        dailyHours = Math.round(dailyHours * 10.0) / 10.0;
+
+                        boolean eligibleForOT = (logIn.equals(otStart) || (logIn.isAfter(otStart) && logIn.isBefore(otEnd)));
+
+                        dailyHours -= 1; // Deduct 1 hour for lunch
+
+                        if (dailyHours <= 8) {
+                            totalRegularHours += dailyHours;
+                        } else {
+                            totalRegularHours += 8;
+                            totalOvertimeHours += dailyHours - 8;
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("❌ Error reading attendance file: " + e.getMessage());
+            }
+
+            // === Salary Calculation ===
+            double regularPay = totalRegularHours * hourlyRate;
+            double overtimePay = totalOvertimeHours * hourlyRate * overtimeRatePercentage;
+            double weeklySalary = regularPay + overtimePay;
+
+            double riceSubsidy = Double.parseDouble(getCellValue(row.getCell(14))) / 4.33;
+            double phoneAllowance = Double.parseDouble(getCellValue(row.getCell(15))) / 4.33;
+            double clothingAllowance = Double.parseDouble(getCellValue(row.getCell(16))) / 4.33;
+
+            double sss = calculateSSS(weeklySalary);
+            double philHealth = calculatePhilHealth(weeklySalary);
+            double pagIbig = calculatePagIbig(weeklySalary);
+            double withholdingTax = calculateWithholdingTax(weeklySalary, sss, philHealth, pagIbig);
+
+            double deductionSum = weeklySalary - sss - philHealth - pagIbig - withholdingTax;
+            double netSalary = deductionSum + riceSubsidy + phoneAllowance + clothingAllowance;
+
+            // === Display Results ===
+            LocalDate birthday = parseDateFromCell(row.getCell(3));
+
+            System.out.println("Employee Number: " + getCellValue(row.getCell(0)));
+            System.out.println("Employee Name: " + getCellValue(row.getCell(2)) + " " + getCellValue(row.getCell(1)));
+            System.out.println("Birthday: " + birthdayFormat.format(birthday));
+            System.out.println("Week Number: " + weekNumber);
+            System.out.println("Period: " + weekStartDate + " to " + weekEndDate);
+            System.out.println("Total Regular Hours: " + dfNumber.format(totalRegularHours));
+            System.out.println("Overtime Hours: " + dfNumber.format(totalOvertimeHours));
+            System.out.println("----------------------------------------------");
+            System.out.println("Basic Salary: ₱ " + dfNumber.format(basicSalary));
+            System.out.println("Hourly Rate: ₱ " + dfNumber.format(hourlyRate));
+            System.out.println("Gross Salary: ₱ " + dfNumber.format(weeklySalary));
+            System.out.println("SSS Deduction: ₱ " + dfNumber.format(sss));
+            System.out.println("PAG-IBIG: ₱ " + dfNumber.format(pagIbig));
+            System.out.println("PhilHealth: ₱ " + dfNumber.format(philHealth));
+            System.out.println("Withholding Tax: ₱ " + dfNumber.format(withholdingTax));
+            System.out.println("Rice Subsidy: ₱ " + dfNumber.format(riceSubsidy));
+            System.out.println("Phone Allowance: ₱ " + dfNumber.format(phoneAllowance));
+            System.out.println("Clothing Allowance: ₱ " + dfNumber.format(clothingAllowance));
+            System.out.println("----------------------------------------------");
+            System.out.println("Net Salary: ₱ " + dfNumber.format(netSalary));
+            System.out.println("==============================================");
+        }
+
+    } catch (IOException e) {
+        System.out.println("❌ Error reading file: " + e.getMessage());
+    }
+}
 
     private static LocalDate parseDateFromCell(Cell cell) {
         try {
