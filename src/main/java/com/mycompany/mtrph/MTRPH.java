@@ -26,6 +26,9 @@ public class MTRPH {
     private static final String EMPLOYEE_DATA_FILE = "src/Copy of MotorPH Employee Data.xlsx";
     private static final String EMPLOYEE_SHEET_NAME = "Employee Details";
     private static final String ATTENDANCE_SHEET_NAME = "Attendance Record";
+    private static String weekNumber;
+    private static boolean weekEndDate;
+    private static String weekStartDate;
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -62,31 +65,35 @@ public class MTRPH {
         while (true) {
             System.out.println("(0) Log Out");
             System.out.println("(1) Search Employee");
-            System.out.println("(2) Add Employee");
-            System.out.println("(3) Edit Employee Details");
-            System.out.println("(4) Delete Employee");
+            System.out.println("(2) Display All Employees");
+            System.out.println("(3) Add Employee");
+            System.out.println("(4) Edit Employee Details");
+            System.out.println("(5) Delete Employee");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
 
             switch (choice) {
                 case 0:
-                    System.out.println("Logging out..."); // Log out
+                    System.out.println("Logging out...");
                     return;
                 case 1:
                     searchEmployee(scanner);
                     break;
                 case 2:
-                    addEmployee(scanner);
+                    displayAllEmployees();
                     break;
                 case 3:
-                    editEmployeeDetails(scanner);
+                    addEmployee(scanner);
                     break;
                 case 4:
+                    editEmployeeDetails(scanner);
+                    break;
+                case 5:
                     deleteEmployee(scanner);
                     break;
                 default:
-                    System.out.println("❌ Invalid choice. Please try again.");
+                    System.out.println("Invalid choice. Please try again.");
             }
         }
     }
@@ -400,7 +407,49 @@ public class MTRPH {
             System.out.println("❌ Error accessing file: " + e.getMessage());
         }
     }
+        private static void displayAllEmployees() {
+            try (FileInputStream fis = new FileInputStream(EMPLOYEE_DATA_FILE);
+                 Workbook workbook = new XSSFWorkbook(fis)) {
 
+                Sheet employeeSheet = workbook.getSheet(EMPLOYEE_SHEET_NAME);
+                if (employeeSheet == null) {
+                    System.out.println("❌ Employee data sheet not found!");
+                    return;
+                }
+
+                System.out.println("\nMotorPH Payroll Management System");
+                System.out.println("==============================================");
+
+                DateTimeFormatter birthdayFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
+                for (Row row : employeeSheet) {
+                    if (row.getRowNum() == 0) continue; // Skip header row
+                    
+                    if (getCellValue(row.getCell(0)).isEmpty() && getCellValue(row.getCell(2)).isEmpty()) {
+                        continue;
+                        }
+
+
+                    // Display employee details
+                    System.out.println("Employee Name: "   + getCellValue(row.getCell(2)) + " " + getCellValue(row.getCell(1)));
+                    System.out.println("Employee Number: " + getCellValue(row.getCell(0)));
+                    System.out.println("Birthday:        " + birthdayFormat.format(parseDateFromCell(row.getCell(3))));
+                    System.out.println("Position:        " + getCellValue(row.getCell(11)));
+                    System.out.println("Immediate Supervisor: " + getCellValue(row.getCell(12)));
+                    System.out.println("Status:          " + getCellValue(row.getCell(10)));
+                    System.out.println("Address:         " + getCellValue(row.getCell(4)));
+                    System.out.println("Phone #:         " + getCellValue(row.getCell(5)));
+                    System.out.println("SSS #:           " + getCellValue(row.getCell(6)));
+                    System.out.println("PhilHealth #:    " + getCellValue(row.getCell(7)));
+                    System.out.println("TIN #:           " + getCellValue(row.getCell(8)));
+                    System.out.println("Pag-IBIG #:      " + getCellValue(row.getCell(9)));
+                    System.out.println("==============================================");
+                }
+
+            } catch (IOException e) {
+                System.out.println("❌ Error reading employee data: " + e.getMessage());
+        }
+    }
      /**
      * Compute employee weekly salary
      */
@@ -621,5 +670,4 @@ public class MTRPH {
             return "";
         }
     }
-
 }
