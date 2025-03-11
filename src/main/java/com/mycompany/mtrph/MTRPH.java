@@ -588,29 +588,28 @@ public class MTRPH {
         return (monthlySalary * contributionRate) / 4.33;
     }
 
-    private static double calculateWithholdingTax(double weeklySalary, double sss, double philHealth, double pagIbig) {
-        double monthlySalary = weeklySalary * (30.42 / 7); 
-        double totalDeductions = sss + philHealth + pagIbig;
-        double taxableIncome = monthlySalary - totalDeductions;
+    private static double calculateWithholdingTax(double basicSalary, double weeklySalary, double sss, double philHealth) {
+        double taxableIncome = basicSalary / 4.33; // Convert monthly salary to weekly
 
         double calculatedTax = 0;
 
-        if (taxableIncome <= 20833) {
-            calculatedTax = 0.0;
-        } else if (taxableIncome <= 33333) {
-            calculatedTax = (taxableIncome - 20833) * 0.20;
-        } else if (taxableIncome <= 66667) {
-            calculatedTax = 2500 + (taxableIncome - 33333) * 0.25;
-        } else if (taxableIncome <= 166667) {
-            calculatedTax = 10833 + (taxableIncome - 66667) * 0.30;
-        } else if (taxableIncome <= 666667) {
-            calculatedTax = 40833.33 + (taxableIncome - 166667) * 0.32;
+        if (taxableIncome <= 4808.56) {
+            calculatedTax = 0;
+        } else if (taxableIncome <= 7692.31) {
+            calculatedTax = (taxableIncome - 4808.56) * 0.20;
+        } else if (taxableIncome <= 15384.62) {
+            calculatedTax = 2500 + (taxableIncome - 7692.31) * 0.25;
+        } else if (taxableIncome <= 38461.54) {
+            calculatedTax = 10833 + (taxableIncome - 15384.62) * 0.30;
+        } else if (taxableIncome <= 153846.15) {
+            calculatedTax = 40833.33 + (taxableIncome - 38461.54) * 0.32;
         } else {
-            calculatedTax = 200833.33 + (taxableIncome - 666667) * 0.35;
+            calculatedTax = 200833.33 + (taxableIncome - 153846.15) * 0.35;
         }
-        return 0;
+
+        return calculatedTax;
     }
-    
+
     private static String getCellValue(Cell cell) {
         if (cell == null) return "";
         switch (cell.getCellType()) {
