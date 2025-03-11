@@ -6,6 +6,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
 import java.time.*;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.text.DecimalFormat;
 import java.time.temporal.ChronoUnit;
@@ -410,10 +411,10 @@ public class MTRPH {
 
     LocalDate weekStartDate = LocalDate.of(2024, 6, 3).plusWeeks(weekNumber - 1);
 
+    // Change the week to only span 5 working days
+    LocalDate weekEndDate = weekStartDate.plusDays(4); 
+
     // Ensure the week does not overlap into the next month
-    LocalDate weekEndDate = weekStartDate.plusDays(6);
-    
-    // If the week ends in the next month, adjust the weekEndDate to the end of the current month
     if (weekEndDate.getMonthValue() != weekStartDate.getMonthValue()) {
         weekEndDate = weekStartDate.withDayOfMonth(weekStartDate.lengthOfMonth());
     }
