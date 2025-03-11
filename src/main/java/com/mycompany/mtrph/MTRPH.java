@@ -420,7 +420,7 @@ public class MTRPH {
                     System.out.println("❌ Employee data sheet not found!");
                     return;
                 }
-
+                System.out.println("==============================================");
                 System.out.println("\nMotorPH Payroll Management System");
                 System.out.println("==============================================");
 
@@ -523,7 +523,7 @@ public class MTRPH {
     } catch (IOException e) {
         System.out.println("❌ Error reading file: " + e.getMessage());
     }
-
+    // === Salary Calculation ===
     double regularPay = totalRegularHours * hourlyRate;
     double overtimePay = totalOvertimeHours * hourlyRate * overtimeRatePercentage;
     double weeklySalary = regularPay + overtimePay;
@@ -543,7 +543,7 @@ public class MTRPH {
     
     // Parse the birthday properly from the cell
     LocalDate birthday = parseDateFromCell(row.getCell(3));
-
+    // === Display Results ===
     System.out.println("==============================================");
     System.out.println("MotorPH Payroll Summary");
     System.out.println("==============================================");
