@@ -137,8 +137,10 @@ public class MTRPH {
         } catch (IOException e) {
             System.out.println("❌ Error reading file: " + e.getMessage());
         }
-    }
-
+    }   
+         /**
+     * displays for an employee by name and displays their details if found.
+     */
     private static void displayEmployeeDetails(Row row, Scanner scanner) {
         DateTimeFormatter birthdayFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
@@ -411,6 +413,9 @@ public class MTRPH {
             System.out.println("❌ Error accessing file: " + e.getMessage());
         }
     }
+        /**
+        * Displays all employees and displays their details if found.
+        */
         private static void displayAllEmployees() {
             try (FileInputStream fis = new FileInputStream(EMPLOYEE_DATA_FILE);
                  Workbook workbook = new XSSFWorkbook(fis)) {
@@ -455,7 +460,7 @@ public class MTRPH {
         }
     }
      /**
-     * Compute employee weekly salary
+     * Compute employee weekly salary of one employee if found
      */
     private static void computeWeeklySalary(Row row, Scanner scanner) {
     System.out.print("Enter Week Number (1-31): ");
@@ -471,7 +476,8 @@ public class MTRPH {
     if (weekEndDate.getMonthValue() != weekStartDate.getMonthValue()) {
         weekEndDate = weekStartDate.withDayOfMonth(weekStartDate.lengthOfMonth());
     }
-
+    
+    // === Basic Salary and Hourly Rate Calculation ===
     double basicSalary = Double.parseDouble(getCellValue(row.getCell(13)).replaceAll("[^0-9.]", ""));
     double hourlyRate = (basicSalary / 21) / 8;
 
