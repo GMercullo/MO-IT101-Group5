@@ -103,7 +103,7 @@ public class MTRPH {
     }
 
      /**
-     * Searches for an employee by name and displays their details if found.
+     * Searches for a specific employee by name and displays their details if found.
      */
     private static void searchEmployee(Scanner scanner) {
         System.out.print("Employee Name: ");
@@ -139,7 +139,7 @@ public class MTRPH {
         }
     }   
          /**
-     * displays for an employee by name and displays their details if found.
+     * displays for a specific employee by name and displays their details if found.
      */
     private static void displayEmployeeDetails(Row row, Scanner scanner) {
         DateTimeFormatter birthdayFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
@@ -281,7 +281,7 @@ public class MTRPH {
     }
     
     /**
-     * Adding new employee and its details from the data
+     * Adding new employee and its details to the data
      */
     private static void addEmployee(Scanner scanner) {
         System.out.print("Enter Employee Number: ");
@@ -366,7 +366,7 @@ public class MTRPH {
      * Delete employee details from the data
      */
     private static void deleteEmployee(Scanner scanner) {
-        System.out.print("Enter Employee Number to Delete: "); // enter the employees number that wanted to be deleted
+        System.out.print("Enter Employee Number to Delete: "); // Enter the employee number of the employee to be deleted.
         String employeeNumber = scanner.nextLine().trim();
 
         try (FileInputStream fis = new FileInputStream(EMPLOYEE_DATA_FILE);
