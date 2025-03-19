@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-// Employee class to store employee details
-class Employee {
-    private String name;
-    private int id;
-    private double hourlyRate;
-    private double hoursWorked;
+// Abstract Employee class
+abstract class Employee {
+    protected String name;
+    protected int id;
+    protected double hourlyRate;
+    protected double hoursWorked;
 
     public Employee(int id, String name, double hourlyRate) {
         this.id = id;
@@ -30,11 +30,7 @@ class Employee {
         this.hoursWorked += hours; 
     }
     
-    public double calcGrossSalary() {
-        double overtimeHours = Math.max(0, hoursWorked - 40);
-        double regularHours = hoursWorked - overtimeHours;
-        return (regularHours * hourlyRate) + (overtimeHours * hourlyRate * 1.5);
-    }
+    public abstract double calcGrossSalary();
     
     @Override
     public String toString() {
@@ -42,12 +38,36 @@ class Employee {
     }
 }
 
+// Full-time Employee with 1.5x overtime pay after 40 hours
+class FullTimeEmployee extends Employee {
+    public FullTimeEmployee(int id, String name, double hourlyRate) {
+        super(id, name, hourlyRate);
+    }
+
+    @Override
+    public double calcGrossSalary() {
+        double overtimeHours = Math.max(0, hoursWorked - 40);
+        double regularHours = hoursWorked - overtimeHours;
+        return (regularHours * hourlyRate) + (overtimeHours * hourlyRate * 1.5);
+    }
+}
+
+// Part-time Employee with no overtime pay
+class PartTimeEmployee extends Employee {
+    public PartTimeEmployee(int id, String name, double hourlyRate) {
+        super(id, name, hourlyRate);
+    }
+
+    @Override
+    public double calcGrossSalary() {
+        return hoursWorked * hourlyRate; // No overtime pay
+    }
+}
+
 // Utility class for payroll calculations
 class PayrollCalculator {
     public static double calcGrossSalary(Employee employee) {
-        double overtimeHours = Math.max(0, employee.getHoursWorked() - 40);
-        double regularHours = employee.getHoursWorked() - overtimeHours;
-        return (regularHours * employee.getHourlyRate()) + (overtimeHours * employee.getHourlyRate() * 1.5);
+        return employee.calcGrossSalary();
     }
 }
 
@@ -60,8 +80,12 @@ public class PayrollApp {
         this.employees = new ArrayList<>();
     }
     
-    public void addEmployee(int id, String name, double hourlyRate) {
-        employees.add(new Employee(id, name, hourlyRate));
+    public void addFullTimeEmployee(int id, String name, double hourlyRate) {
+        employees.add(new FullTimeEmployee(id, name, hourlyRate));
+    }
+    
+    public void addPartTimeEmployee(int id, String name, double hourlyRate) {
+        employees.add(new PartTimeEmployee(id, name, hourlyRate));
     }
     
     public void addHoursWorked(int id, double hours) {
@@ -86,12 +110,12 @@ public class PayrollApp {
         PayrollApp app = new PayrollApp();
         
         // Adding sample employees
-        app.addEmployee(1, "Alice", 20.5);
-        app.addEmployee(2, "Bob", 18.0);
+        app.addFullTimeEmployee(1, "Alice", 20.5);
+        app.addPartTimeEmployee(2, "Bob", 18.0);
         
         // Adding hours worked
-        app.addHoursWorked(1, 45);
-        app.addHoursWorked(2, 38);
+        app.addHoursWorked(1, 45); // Full-time employee with overtime
+        app.addHoursWorked(2, 38); // Part-time employee without overtime
         
         // Displaying employee details
         logger.info("Displaying Employee Details...");
