@@ -763,10 +763,151 @@ public class MTRPH {
     }
 }
     
-    private static double calculateSSS(double weeklySalary) {
-        double monthlySalary = weeklySalary * 4.33;
-        return (monthlySalary <= 3250) ? 135.00 : 1125.00;
-    }
+    public static double calculateSSS(double weeklySalary) {
+        //SssClass test = new SssClass();
+        
+        //test.run();
+        
+        //double monthlySalary = weeklySalary * 4.33;
+        //return (monthlySalary <= 3250) ? 135.00 : 1125.00;
+        double calculateSSS = 0;
+        if (weeklySalary < 3250){
+            calculateSSS = 135;
+        }
+        else if (weeklySalary <= 3750){
+            calculateSSS = 157.50;
+        }
+        else if (weeklySalary <= 4250){
+            calculateSSS = 180;
+        }
+        else if (weeklySalary <= 4750){
+            calculateSSS = 202.50;
+        }
+        else if (weeklySalary <= 5250){
+            calculateSSS = 225;
+        }
+        else if (weeklySalary <= 5750){
+            calculateSSS = 247.50;
+        }
+        else if (weeklySalary <= 6250){
+            calculateSSS = 270;
+        }
+        else if (weeklySalary <= 6750){
+            calculateSSS = 292.50;
+        }
+        else if (weeklySalary <= 7250){
+            calculateSSS = 315;
+        }
+        else if (weeklySalary <= 7750){
+            calculateSSS = 337.50;
+        }
+        else if (weeklySalary <= 8250){
+            calculateSSS = 360;
+        }
+        else if (weeklySalary <= 8750){
+            calculateSSS = 382.50;
+        }
+        else if (weeklySalary <= 9250){
+            calculateSSS = 405;
+        }
+        else if (weeklySalary <= 9750){
+            calculateSSS = 427.50;
+        }
+        else if (weeklySalary <= 10250){
+            calculateSSS = 450;
+        }
+        else if (weeklySalary <= 10750){
+            calculateSSS = 472.50;
+        }
+        else if (weeklySalary <= 11250){
+            calculateSSS = 495;
+        }
+        else if (weeklySalary <= 11750){
+            calculateSSS = 517.50;
+        }
+        else if (weeklySalary <= 12250){
+            calculateSSS = 540;
+        }
+        else if (weeklySalary <= 12750){
+            calculateSSS = 562.50;
+        }
+        else if (weeklySalary <= 13250){
+            calculateSSS = 585;
+        }
+        else if (weeklySalary <= 13750){
+            calculateSSS = 607.50;
+        }
+        else if (weeklySalary <= 14250){
+            calculateSSS = 630;
+        }
+        else if (weeklySalary <= 14750){
+            calculateSSS = 652.50;
+        }
+        else if (weeklySalary <= 15250){
+            calculateSSS = 675;
+        }
+        else if (weeklySalary <= 15750){
+            calculateSSS = 697.50;
+        }
+        else if (weeklySalary <= 16250){
+            calculateSSS = 720;
+        }
+        else if (weeklySalary <= 16750){
+            calculateSSS = 742.50;
+        }
+        else if (weeklySalary <= 17250){
+            calculateSSS = 765;
+        }
+        else if (weeklySalary <= 17750){
+            calculateSSS = 787.50;
+        }
+        else if (weeklySalary <= 18250){
+            calculateSSS = 810;
+        }
+        else if (weeklySalary <= 18750){
+            calculateSSS = 832.50;
+        }
+        else if (weeklySalary <= 19250){
+            calculateSSS = 855;
+        }
+        else if (weeklySalary <= 19750){
+            calculateSSS = 877.50;
+        }
+        else if (weeklySalary <= 20250){
+            calculateSSS = 900;
+        }
+        else if (weeklySalary <= 20750){
+            calculateSSS = 922.50;
+        }
+        else if (weeklySalary <= 21250){
+            calculateSSS = 945;
+        }
+        else if (weeklySalary <= 21750){
+            calculateSSS = 967.50;
+        }
+        else if (weeklySalary <= 22250){
+            calculateSSS = 990;
+        }
+        else if (weeklySalary <= 22750){
+            calculateSSS = 1012.50;
+        }
+        else if (weeklySalary <= 23250){
+            calculateSSS = 1035;
+        }
+        else if (weeklySalary <= 23750){
+            calculateSSS = 1057.50;
+        }
+        else if (weeklySalary <= 24250){
+            calculateSSS = 1080;
+        }
+        else if (weeklySalary <= 24750){
+            calculateSSS = 1102.50;
+        }
+        else {
+            calculateSSS = 1125;
+        }
+        return calculateSSS;
+    }    
 
     private static double calculatePhilHealth(double weeklySalary) {
         double monthlySalary = weeklySalary * 4.33;
