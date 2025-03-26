@@ -21,6 +21,27 @@ import java.time.temporal.ChronoUnit;
 import java.util.Scanner;
 import static org.apache.poi.ss.usermodel.CellType.NUMERIC;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Scanner;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.*;
+import java.time.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.text.DecimalFormat;
+import java.time.temporal.ChronoUnit;
+import java.util.Scanner;
+import static org.apache.poi.ss.usermodel.CellType.NUMERIC;
+import static org.apache.poi.ss.usermodel.CellType.STRING;
 
 public class PayrollCalculator {
 
@@ -272,6 +293,199 @@ public class PayrollCalculator {
                     return null;
             }
         }
+    
+    public static void displayAllEmployeesWithWeeklySalary(Scanner scanner) {
+    System.out.print("Enter Week Number (1-31): ");
+    int weekNumber = scanner.nextInt();
+    scanner.nextLine();
+
+    LocalDate weekStartDate = LocalDate.of(2024, 6, 3).plusWeeks(weekNumber - 1);
+    LocalDate weekEndDate = weekStartDate.plusDays(4);
+
+    if (weekEndDate.getMonthValue() != weekStartDate.getMonthValue()) {
+        weekEndDate = weekStartDate.withDayOfMonth(weekStartDate.lengthOfMonth());
+    }
+
+    try (FileInputStream fis = new FileInputStream(EMPLOYEE_DATA_FILE);
+         Workbook workbook = new XSSFWorkbook(fis)) {
+
+        Sheet employeeSheet = workbook.getSheet(EMPLOYEE_SHEET_NAME);
+        if (employeeSheet == null) {
+            System.out.println("❌ Employee data sheet not found!");
+            return;
+        }
+
+        System.out.println("\nMotorPH Payroll Management System");
+        System.out.println("==============================================");
+
+        DateTimeFormatter birthdayFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
+        for (Row row : employeeSheet) {
+            if (row.getRowNum() == 0) continue; // Skip header row
+
+            /*if (getCellValue(row.getCell(0)).isEmpty() && getCellValue(row.getCell(2)).isEmpty()) {
+                continue;
+            }*/
+
+            // === Basic Salary and Hourly Rate Calculation ===
+            Object cellValue = getCellValue(row.getCell(13));
+            double basicSalary = 0.0;
+            if (cellValue instanceof Double) {
+                basicSalary = (Double) cellValue;  // Directly use it as a double
+            } else if (cellValue instanceof String) {
+                basicSalary = Double.parseDouble((String) cellValue);  // Parse string to double if needed
+            } else {
+                // Handle other types or errors here
+                //System.out.println("Unexpected cell value type: " + cellValue.getClass());
+            }
+            double hourlyRate = (basicSalary / 21) / 8;
+
+            double totalRegularHours = 0;
+            double totalOvertimeHours = 0;
+            double overtimeRatePercentage = 1.25;
+
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            LocalTime otStart = LocalTime.of(8, 0);
+            LocalTime otEnd = LocalTime.of(8, 10);
+
+            // === Attendance Data Processing ===
+            try (FileInputStream attendanceFis = new FileInputStream(EMPLOYEE_DATA_FILE);
+                 Workbook attendanceWorkbook = new XSSFWorkbook(attendanceFis)) {
+
+                Sheet attendanceSheet = attendanceWorkbook.getSheet(ATTENDANCE_SHEET_NAME);
+                if (attendanceSheet == null) {
+                    System.out.println("❌ Sheet '" + ATTENDANCE_SHEET_NAME + "' not found!");
+                    return;
+                }
+
+                for (Row attendanceRow : attendanceSheet) {
+                    if (attendanceRow.getRowNum() == 0) continue;
+
+                    String fullName = getCellValue(attendanceRow.getCell(2)) + " " + getCellValue(attendanceRow.getCell(1));
+                    if (fullName.equalsIgnoreCase(getCellValue(row.getCell(2)) + " " + getCellValue(row.getCell(1)))) {
+                        LocalDate date = parseDateFromCell(attendanceRow.getCell(3));
+                        if (date.isBefore(weekStartDate) || date.isAfter(weekEndDate)) continue;
+
+                        LocalTime logIn = readTimeCell(attendanceRow.getCell(4), timeFormatter);
+                        LocalTime logOut = readTimeCell(attendanceRow.getCell(5), timeFormatter);
+
+                        double dailyHours = ChronoUnit.MINUTES.between(logIn, logOut) / 60.0;
+                        dailyHours = Math.round(dailyHours * 10.0) / 10.0;
+
+                        boolean eligibleForOT = (logIn.equals(otStart) || (logIn.isAfter(otStart) && logIn.isBefore(otEnd)));
+
+                        dailyHours -= 1; // Deduct 1 hour for lunch
+
+                        if (dailyHours <= 8) {
+                            totalRegularHours += dailyHours;
+                        } else {
+                            totalRegularHours += 8;
+                            totalOvertimeHours += dailyHours - 8;
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("❌ Error reading attendance file: " + e.getMessage());
+            }
+
+            // === Salary Calculation ===
+            double regularPay = totalRegularHours * hourlyRate;
+            double overtimePay = totalOvertimeHours * hourlyRate * overtimeRatePercentage;
+            double weeklySalary = regularPay + overtimePay;
+
+            cellValue = getCellValue(row.getCell(14));  // Rice Subsidy
+            double riceSubsidy = 0.0;
+            if (cellValue instanceof String) {
+                riceSubsidy = Double.parseDouble((String) cellValue);
+            } else if (cellValue instanceof Double) {
+                riceSubsidy = (Double) cellValue;
+            }
+            riceSubsidy /= 4.33;
+
+            cellValue = getCellValue(row.getCell(15));  // Phone Allowance
+            double phoneAllowance = 0.0;
+            if (cellValue instanceof String) {
+                phoneAllowance = Double.parseDouble((String) cellValue);
+            } else if (cellValue instanceof Double) {
+                phoneAllowance = (Double) cellValue;
+            }
+            phoneAllowance /= 4.33;
+
+            cellValue = getCellValue(row.getCell(16));  // Clothing Allowance
+            double clothingAllowance = 0.0;
+            if (cellValue instanceof String) {
+                clothingAllowance = Double.parseDouble((String) cellValue);
+            } else if (cellValue instanceof Double) {
+                clothingAllowance = (Double) cellValue;
+            }
+            clothingAllowance /= 4.33;
+
+            double sss = calculateSSS(weeklySalary);
+            double philHealth = calculatePhilHealth(weeklySalary);
+            double pagIbig = calculatePagIbig(weeklySalary);
+            double withholdingTax = calculateWithholdingTax(weeklySalary, sss, philHealth, pagIbig);
+
+            double deductionSum = weeklySalary - sss - philHealth - pagIbig - withholdingTax;
+            double netSalary = deductionSum + riceSubsidy + phoneAllowance + clothingAllowance;
+
+            // === Display Results ===
+            LocalDate birthday = parseDateFromCell(row.getCell(3));
+            
+            // Create a DecimalFormat instance
+            DecimalFormat df = new DecimalFormat("#,###.00");
+
+            System.out.println("Employee Number: " + getCellValue(row.getCell(0)));
+            System.out.println("Employee Name: " + getCellValue(row.getCell(2)) + " " + getCellValue(row.getCell(1)));
+            System.out.println("Birthday: " + birthdayFormat.format(birthday));
+            System.out.println("Week Number: " + weekNumber);
+            System.out.println("Period: " + weekStartDate + " to " + weekEndDate);
+            System.out.println("Total Regular Hours: " + df.format(totalRegularHours));
+            System.out.println("Overtime Hours: " + df.format(totalOvertimeHours));
+            System.out.println("----------------------------------------------");
+            System.out.println("Basic Salary: ₱ " + df.format(basicSalary));
+            System.out.println("Hourly Rate: ₱ " + df.format(hourlyRate));
+            System.out.println("Gross Salary: ₱ " + df.format(weeklySalary));
+            System.out.println("SSS Deduction: ₱ " + df.format(sss));
+            System.out.println("PAG-IBIG: ₱ " + df.format(pagIbig));
+            System.out.println("PhilHealth: ₱ " + df.format(philHealth));
+            System.out.println("Withholding Tax: ₱ " + df.format(withholdingTax));
+            System.out.println("Rice Subsidy: ₱ " + df.format(riceSubsidy));
+            System.out.println("Phone Allowance: ₱ " + df.format(phoneAllowance));
+            System.out.println("Clothing Allowance: ₱ " + df.format(clothingAllowance));
+            System.out.println("----------------------------------------------");
+            System.out.println("Net Salary: ₱ " + df.format(netSalary));
+            System.out.println("==============================================");
+            //System.out.println("(0) Home Page");
+            //System.out.println("(1) Display Other Week");
+            //System.out.println("(2) Edit Employee Details");
+            //System.out.println("(3) Delete Employee");
+            /*System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            // Handling user's choice
+            switch (choice) {
+                case 0:
+                    return;
+                case 1:
+                    displayAllEmployeesWithWeeklySalary(scanner);
+                    break;
+                /*case 2:
+                    Employee.editEmployeeDetails(scanner);
+                    break;
+                case 3:
+                    Employee.deleteEmployee(scanner);
+                    break;
+                default:
+                    System.out.println("❌ Invalid choice. Please try again.");
+                    break;
+            }*/
+        }
+
+    } catch (IOException e) {
+        System.out.println("❌ Error reading file: " + e.getMessage());
+    }
+}
 
         // Method for parsing date from cell
         private static LocalDate parseDateFromCell(Cell cell) {
