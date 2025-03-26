@@ -69,6 +69,7 @@ public class MTRPH {
             System.out.println("(2) Display All Employees");
             System.out.println("(3) Add Employee");
             System.out.println("(4) Delete Employee");
+            System.out.println("(5) Display All Employees With Weekly Salary");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
@@ -89,6 +90,10 @@ public class MTRPH {
                     break;
                 case 4:
                     Employee.deleteEmployee(scanner);
+                    break;
+                case 5:
+                    PayrollCalculator.displayAllEmployeesWithWeeklySalary(scanner);
+                    break;
                 default:
                     System.out.println("❌ Invalid choice. Please try again.");
             }
