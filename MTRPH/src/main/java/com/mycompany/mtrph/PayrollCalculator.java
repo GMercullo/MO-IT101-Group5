@@ -2,8 +2,6 @@ package com.mycompany.mtrph;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -13,28 +11,10 @@ import org.apache.poi.ss.usermodel.CellType;
 import static org.apache.poi.ss.usermodel.CellType.BOOLEAN;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Scanner;
-import static org.apache.poi.ss.usermodel.CellType.NUMERIC;
-import static org.apache.poi.ss.usermodel.CellType.STRING;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import java.io.*;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Scanner;
-import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.*;
-import java.time.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.text.DecimalFormat;
@@ -103,14 +83,14 @@ public class PayrollCalculator {
             System.out.print("Enter Week Number (1-31): ");
             int weekNumber = scanner.nextInt();
             scanner.nextLine();
-
+            System.out.println("Calculating Weekly Salary...");
             LocalDate weekStartDate = LocalDate.of(2024, 6, 3).plusWeeks(weekNumber - 1);
             LocalDate weekEndDate = weekStartDate.plusDays(4);
 
             if (weekEndDate.getMonthValue() != weekStartDate.getMonthValue()) {
                 weekEndDate = weekStartDate.withDayOfMonth(weekStartDate.lengthOfMonth());
             }
-
+            
             // === Basic Salary and Hourly Rate Calculation ===
             Object cellValue = getCellValue(row.getCell(13));
             double basicSalary = 0.0;
@@ -274,23 +254,29 @@ public class PayrollCalculator {
 
 
         // Method for getting cell value
-        private static Object getCellValue(Cell cell) {
-            if (cell == null) {
-                return null;
-            }
+        private static String getCellValue(Cell cell) {
+            if (cell == null) return ""; // Return empty string for null cells
+
             switch (cell.getCellType()) {
                 case STRING:
-                    return cell.getStringCellValue();
+                    return cell.getStringCellValue().trim();
                 case NUMERIC:
                     if (DateUtil.isCellDateFormatted(cell)) {
-                        return cell.getDateCellValue();
+                        // If it's a date, format it properly
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+                        return cell.getLocalDateTimeCellValue().format(formatter);
                     } else {
-                        return cell.getNumericCellValue();
+                        // Convert numeric value to string without scientific notation
+                        return String.valueOf((long) cell.getNumericCellValue());
                     }
                 case BOOLEAN:
-                    return cell.getBooleanCellValue();
+                    return String.valueOf(cell.getBooleanCellValue());
+                case FORMULA:
+                    return cell.getCellFormula();
+                case BLANK:
+                    return "";
                 default:
-                    return null;
+                    return "";
             }
         }
     
@@ -298,7 +284,12 @@ public class PayrollCalculator {
     System.out.print("Enter Week Number (1-31): ");
     int weekNumber = scanner.nextInt();
     scanner.nextLine();
-
+        
+    if (weekNumber < 1 || weekNumber > 31) {
+        System.out.println("❌ Invalid week number! Please enter a value between 1 and 31.");
+        return;
+    }
+    System.out.println("Calculating Weekly Salaries...");
     LocalDate weekStartDate = LocalDate.of(2024, 6, 3).plusWeeks(weekNumber - 1);
     LocalDate weekEndDate = weekStartDate.plusDays(4);
 
@@ -314,18 +305,25 @@ public class PayrollCalculator {
             System.out.println("❌ Employee data sheet not found!");
             return;
         }
-
-        System.out.println("\nMotorPH Payroll Management System");
+        System.out.println();
+        System.out.println("==============================================");
+        System.out.println("MotorPH Payroll Management System");
         System.out.println("==============================================");
 
         DateTimeFormatter birthdayFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
         for (Row row : employeeSheet) {
             if (row.getRowNum() == 0) continue; // Skip header row
-
-            /*if (getCellValue(row.getCell(0)).isEmpty() && getCellValue(row.getCell(2)).isEmpty()) {
-                continue;
-            }*/
+                      
+            // Retrieve cell values safely
+            String employeeNumber = (String) getCellValue(row.getCell(0));
+            String employeeName = (String) getCellValue(row.getCell(1));
+            
+            // Ensure null checks before calling isEmpty()
+            if ((employeeNumber == null || employeeNumber.trim().isEmpty()) &&
+                (employeeName == null || employeeName.trim().isEmpty())) {
+                continue; // Skip blank row
+            }
 
             // === Basic Salary and Hourly Rate Calculation ===
             Object cellValue = getCellValue(row.getCell(13));
@@ -436,7 +434,12 @@ public class PayrollCalculator {
 
             System.out.println("Employee Number: " + getCellValue(row.getCell(0)));
             System.out.println("Employee Name: " + getCellValue(row.getCell(2)) + " " + getCellValue(row.getCell(1)));
-            System.out.println("Birthday: " + birthdayFormat.format(birthday));
+            System.out.println("Debug: Birthday value from cell = " + birthday);
+            if (birthday != null) {
+                System.out.println("Birthday: " + birthdayFormat.format(birthday));
+            } else {
+                System.out.println("Birthday: N/A"); // Handle missing birthday
+            }
             System.out.println("Week Number: " + weekNumber);
             System.out.println("Period: " + weekStartDate + " to " + weekEndDate);
             System.out.println("Total Regular Hours: " + df.format(totalRegularHours));
@@ -486,6 +489,7 @@ public class PayrollCalculator {
         System.out.println("❌ Error reading file: " + e.getMessage());
     }
 }
+
 
         // Method for parsing date from cell
         private static LocalDate parseDateFromCell(Cell cell) {
