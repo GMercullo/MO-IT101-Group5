@@ -2,13 +2,15 @@ package com.mycompany.mtrph;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import java.io.*;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import static org.apache.poi.ss.usermodel.CellType.BOOLEAN;
+import static org.apache.poi.ss.usermodel.CellType.NUMERIC;
+import static org.apache.poi.ss.usermodel.CellType.STRING;
 
 public class Employee {
     private static final String EMPLOYEE_DATA_FILE = "src/Copy of MotorPH Employee Data.xlsx";
@@ -61,7 +63,7 @@ public class Employee {
                 return;
             }
             System.out.println("==============================================");
-            System.out.println("\nMotorPH Payroll Management System");
+            System.out.println("MotorPH Payroll Management System");
             System.out.println("==============================================");
 
             DateTimeFormatter birthdayFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
@@ -145,7 +147,7 @@ public class Employee {
         LocalDate birthday = parseDateFromCell(row.getCell(3));
         System.out.println();
         System.out.println("==============================================");
-        System.out.println("\nMotorPH Payroll Management System");
+        System.out.println("MotorPH Payroll Management System");
         System.out.println("==============================================");
         System.out.println("Employee Name: " + getCellValue(row.getCell(2)) + " " + getCellValue(row.getCell(1)));
         System.out.println("Employee Number: " + getCellValue(row.getCell(0)));
