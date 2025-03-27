@@ -80,9 +80,14 @@ public class PayrollCalculator {
     // Calculates Weekly Salary
     public static void calcWeeklySalary(Row row, Scanner scanner) {
         while (true) {
-            System.out.print("Enter Week Number (1-31): ");
-            int weekNumber = scanner.nextInt();
-            scanner.nextLine();
+        System.out.print("Enter Week Number (1-31): ");
+        int weekNumber = scanner.nextInt();
+        scanner.nextLine();
+
+        if (weekNumber < 1 || weekNumber > 31) {
+            System.out.println("❌ Invalid week number! Please enter a value between 1 and 31.");
+            return;
+        }
             System.out.println("Calculating Weekly Salary...");
             LocalDate weekStartDate = LocalDate.of(2024, 6, 3).plusWeeks(weekNumber - 1);
             LocalDate weekEndDate = weekStartDate.plusDays(4);
@@ -458,31 +463,6 @@ public class PayrollCalculator {
             System.out.println("----------------------------------------------");
             System.out.println("Net Salary: ₱ " + df.format(netSalary));
             System.out.println("==============================================");
-            //System.out.println("(0) Home Page");
-            //System.out.println("(1) Display Other Week");
-            //System.out.println("(2) Edit Employee Details");
-            //System.out.println("(3) Delete Employee");
-            /*System.out.print("Enter your choice: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine();
-
-            // Handling user's choice
-            switch (choice) {
-                case 0:
-                    return;
-                case 1:
-                    displayAllEmployeesWithWeeklySalary(scanner);
-                    break;
-                /*case 2:
-                    Employee.editEmployeeDetails(scanner);
-                    break;
-                case 3:
-                    Employee.deleteEmployee(scanner);
-                    break;
-                default:
-                    System.out.println("❌ Invalid choice. Please try again.");
-                    break;
-            }*/
         }
 
     } catch (IOException e) {
